@@ -5,9 +5,20 @@
     xmlns:local="using:MSDevListManager"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
+    mc:Ignorable="d" Height="821" Width="1117">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-
+        <ComboBox x:Name="handleCB" HorizontalAlignment="Left" Margin="83,73,0,0" VerticalAlignment="Top" Width="298" AllowFocusOnInteraction="False"/>
+        <TextBox x:Name="handleInput" Header="Add an account" PlaceholderText="Insert Twitter Handle Here" Margin="523,42,298,716"/>
+        <Button Name="findAccount"  
+        BorderBrush="Black" BorderThickness="1" 
+        Click="findAccount_Click" ClickMode="Press" Margin="904,73,0,718">
+            Search
+            <FlyoutBase.AttachedFlyout>
+                <Flyout>
+                    <TextBlock Text="Please provide a valid twitter handle."  />
+                </Flyout>
+            </FlyoutBase.AttachedFlyout>
+        </Button>
     </Grid>
 </Page>
