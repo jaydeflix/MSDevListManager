@@ -9,7 +9,7 @@
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <ComboBox x:Name="handleCB" HorizontalAlignment="Left" Margin="83,73,0,0" VerticalAlignment="Top" Width="298" AllowFocusOnInteraction="False"/>
-        <TextBox x:Name="handleInput" Header="Add an account" PlaceholderText="Insert Twitter Handle Here" Margin="523,42,298,716"/>
+        <TextBox x:Name="handleInput" Header="Add an account" PlaceholderText="Insert Twitter Handle Here" Margin="523,42,298,716" KeyDown="handleKeyDown"/>
         <Button Name="findAccount"  
         BorderBrush="Black" BorderThickness="1" 
         Click="findAccount_Click" ClickMode="Press" Margin="904,73,0,718">

@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Net.Http;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using System.Windows.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -32,6 +33,7 @@ namespace MSDevListManager
     /// </summary>
     public sealed partial class MainPage : Page
     {
+       
 
         string ConsumerKey = "BDPQEoOINIH6LOrZBoMlrjslZ";
         string ConsumerSecret = "JDQdEExH8p72bNYHsA5G4mR0ZSALcWqJHxsO76XrlkKRgTXAmg";
@@ -73,6 +75,9 @@ namespace MSDevListManager
 
         public async void twitterCheck(object sender, RoutedEventArgs e)
         {
+            Button origin = (Button)sender;
+            string urlAuth = (String)origin.Tag;
+
             var uri = new Uri(urlAuth);
             Windows.System.Launcher.LaunchUriAsync(uri);
             return;
@@ -83,7 +88,7 @@ namespace MSDevListManager
         public void findAccount_Click(object sender, RoutedEventArgs e)
         {   //verify handle matches regex
             if (!(validHandle.IsMatch(handleInput.Text)))
-            { FlyoutBase.ShowAttachedFlyout((FrameworkElement)sender); }
+            { FlyoutBase.ShowAttachedFlyout((FrameworkElement)findAccount); }
             else
             {
                 try
@@ -97,7 +102,7 @@ namespace MSDevListManager
 
                 if (statusCode.ToString() == "404") //handle doesn't exist
                     {
-                        FlyoutBase.ShowAttachedFlyout((FrameworkElement)sender);
+                        FlyoutBase.ShowAttachedFlyout((FrameworkElement)findAccount);
                         return;
                     }
                 else
@@ -127,6 +132,7 @@ namespace MSDevListManager
                         Button launchTwitter = new Button();
                         launchTwitter.Content = "Launch Twitter";
                         launchTwitter.Click += twitterCheck;
+                        launchTwitter.Tag = urlAuth;
                         panel.Children.Add(launchTwitter);
 
 
@@ -134,35 +140,26 @@ namespace MSDevListManager
                         twtPin.Text = "Insert Pin Here";
                         panel.Children.Add(twtPin);
                       
-
-
                         dialog.Content = panel;
 
-                        // The CanExecute of the Command does not enable/disable the button :-(
+                        
                         dialog.PrimaryButtonText = "Verify Pin";
                         dialog.CloseButtonText = "Cancel";
 
                         var result = dialog.ShowAsync();
+                        
+                        if (result.GetResults() == ContentDialogResult.Primary)
+                        {
+                            var userCredentials = 
+                                AuthFlow.CreateCredentialsFromVerifierCode(twtPin.Text, authenticationContext);
+                            Auth.SetCredentials(userCredentials);
+                            Windows.Storage.ApplicationDataCompositeValue composite =
+                            new Windows.Storage.ApplicationDataCompositeValue();
+                            composite["userKey"] = userCredentials.ConsumerKey;
+                            composite["userSecret"] = userCredentials.ConsumerSecret;
 
-                        if (result == ContentDialogResult.Primary)
-                        { var authCredentials = AuthFlow.CreateCredentialsFromVerifierCode(twtPin, authenticationContext); }
-
-
-
-
-                        //var appCredentials = new TwitterCredentials("ConsumerKey","ConsumerSecret");
-                        //var authenticationContext = AuthFlow.InitAuthentication(appCredentials);
-                        //string urlAuth = authenticationContext.AuthorizationURL;
-                        //var uri = new Uri(uriToLaunch);
-                        //async void DefaultLaunch()
-                        //{ var success = await Windows.System.Launcher.LaunchUriAsync(uri);
-                        //if (success)
-                        //    { }
-                        //        }
-                        //var pinCode = Console.ReadLine();
-
-                        //var authCredentials = AuthFlow.CreateCredentialsFromVerifierCode(pinCode, authenticationContext);
-
+                            localSettings.Values[handleInput.Text] = composite;
+                        }
 
                     }
                 }
@@ -175,6 +172,12 @@ namespace MSDevListManager
             }
         }
 
-
+        private void handleKeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == Windows.System.VirtualKey.Enter)
+            {
+                findAccount_Click(sender,e);
+            }
+        }
     }
 }
