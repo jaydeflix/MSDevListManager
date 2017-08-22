@@ -20,6 +20,7 @@ using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using Tweetinvi;
 using Tweetinvi.Models;
+using Tweetinvi.Credentials.Models;
 
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
@@ -37,6 +38,7 @@ namespace MSDevListManager
 
         string ConsumerKey = "BDPQEoOINIH6LOrZBoMlrjslZ";
         string ConsumerSecret = "JDQdEExH8p72bNYHsA5G4mR0ZSALcWqJHxsO76XrlkKRgTXAmg";
+        
         Windows.Storage.ApplicationDataContainer localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
         Windows.Storage.StorageFolder localFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
         Regex validHandle = new Regex(@"\b(@|)([A-Za-z]+[A-Za-z0-9_]+)");
@@ -75,8 +77,13 @@ namespace MSDevListManager
 
         public async void twitterCheck(object sender, RoutedEventArgs e)
         {
+
+            var appCredentials = new TwitterCredentials(ConsumerKey, ConsumerSecret);
+            var authenticationContext = AuthFlow.InitAuthentication(appCredentials);
+            string urlAuth = authenticationContext.AuthorizationURL;
+
             Button origin = (Button)sender;
-            string urlAuth = (String)origin.Tag;
+            
 
             var uri = new Uri(urlAuth);
             Windows.System.Launcher.LaunchUriAsync(uri);
@@ -100,26 +107,13 @@ namespace MSDevListManager
                     HttpResponseMessage handleCheck = pageExist.Result;
                     int statusCode = (int)handleCheck.StatusCode;
 
-                if (statusCode.ToString() == "404") //handle doesn't exist
+                    if (statusCode.ToString() == "404") //handle doesn't exist
                     {
                         FlyoutBase.ShowAttachedFlyout((FrameworkElement)findAccount);
                         return;
                     }
-                else
+                    else
                     {
-                        var btn = sender as Button;
-
-                        var appCredentials = new TwitterCredentials("ConsumerKey", "ConsumerSecret");
-                        var authenticationContext = AuthFlow.InitAuthentication(appCredentials);
-                        string urlAuth = authenticationContext.AuthorizationURL;
-
-                        ContentDialog dialog = new ContentDialog()
-                        {
-                            Title = "Twitter Authentication",
-                            //RequestedTheme = ElementTheme.Dark,
-                            //FullSizeDesired = true,
-                            MaxWidth = this.ActualWidth // Required for Mobile!
-                        };
 
                         var panel = new StackPanel();
 
@@ -132,25 +126,35 @@ namespace MSDevListManager
                         Button launchTwitter = new Button();
                         launchTwitter.Content = "Launch Twitter";
                         launchTwitter.Click += twitterCheck;
-                        launchTwitter.Tag = urlAuth;
                         panel.Children.Add(launchTwitter);
 
 
                         TextBox twtPin = new TextBox();
                         twtPin.Text = "Insert Pin Here";
                         panel.Children.Add(twtPin);
-                      
+
+                        ContentDialog dialog = new ContentDialog()
+                        {
+                            Title = "Twitter Authentication",
+                            //RequestedTheme = ElementTheme.Dark,
+                            //FullSizeDesired = true,
+                            MaxWidth = this.ActualWidth // Required for Mobile!
+                        };
+
+
                         dialog.Content = panel;
 
-                        
+
                         dialog.PrimaryButtonText = "Verify Pin";
                         dialog.CloseButtonText = "Cancel";
 
                         var result = dialog.ShowAsync();
-                        
+
                         if (result.GetResults() == ContentDialogResult.Primary)
                         {
-                            var userCredentials = 
+                            var appCredentials = new TwitterCredentials(ConsumerKey, ConsumerSecret);
+                            var authenticationContext = AuthFlow.InitAuthentication(appCredentials);
+                            var userCredentials =
                                 AuthFlow.CreateCredentialsFromVerifierCode(twtPin.Text, authenticationContext);
                             Auth.SetCredentials(userCredentials);
                             Windows.Storage.ApplicationDataCompositeValue composite =
@@ -158,9 +162,14 @@ namespace MSDevListManager
                             composite["userKey"] = userCredentials.ConsumerKey;
                             composite["userSecret"] = userCredentials.ConsumerSecret;
 
+                            if (!(localSettings.Values.ContainsKey("handlesCS")))
+                                localSettings.Values["handlesCS"] = handleInput.Text;
+                            else
+                                localSettings.Values["handlesCS"] = localSettings.Values["handlesCS"].ToString() + "," + handleInput.Text;
                             localSettings.Values[handleInput.Text] = composite;
-                        }
+                            // the lines above do not seem to be saving the settings. Either that, or I wrote the check to see if the settings are made wrong.
 
+                        }
                     }
                 }
                 catch
